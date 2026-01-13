@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Man vs Machine: The LLM Battle</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .neon-shadow {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.8);
+        }
+        
+        .bot-thinking {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        /* Glitch effect for winner text */
+        .glitch {
+            position: relative;
+        }
+        
+        .progress-bar-fill {
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 selection:bg-green-500 selection:text-black">
+
+    <!-- Header -->
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 neon-text mb-2">MAN vs MACHINE</h1>
+        <p class="text-slate-400 text-sm md:text-base tracking-widest uppercase">Prove biological superiority</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-xl overflow-hidden shadow-2xl relative min-h-[500px]">
+        
+        <!-- Screen 1: Setup -->
+        <div id="setup-screen" class="p-8 flex flex-col h-full justify-between">
+            <div class="space-y-8">
+                <!-- Select Opponent -->
+                <div>
+                    <h2 class="text-xl text-green-400 mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
+                        <span>></span> SELECT OPPONENT
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="opponent-grid">
+                        <!-- Opponents injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Select Challenge -->
+                <div>
+                    <h2 class="text-xl text-blue-400 mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
+                        <span>></span> SELECT PROTOCOL
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="challenge-grid">
+                        <!-- Challenges injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-btn" class="mt-8 w-full bg-slate-700 text-slate-500 font-bold py-4 rounded-lg uppercase tracking-wider cursor-not-allowed transition-all duration-300" disabled>
+                Initialize Battle Sequence
+            </button>
+        </div>
+
+        <!-- Screen 2: Battle Arena -->
+        <div id="battle-screen" class="hidden h-full flex flex-col relative">
+            
+            <!-- Scoreboard -->
+            <div class="flex justify-between items-center bg-slate-900 p-4 border-b border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-black font-bold text-lg">H</div>
+                    <div>
+                        <div class="text-xs text-slate-400 uppercase">Human</div>
+                        <div class="text-xl font-bold text-white" id="human-score">0</div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-xs text-slate-500 uppercase tracking-widest">Round</div>
+                    <div class="text-2xl font-bold text-white"><span id="current-round">1</span><span class="text-slate-600">/3</span></div>
+                </div>
+
+                <div class="flex items-center gap-3 text-right">
+                    <div>
+                        <div class="text-xs text-slate-400 uppercase" id="bot-name-display">Bot</div>
+                        <div class="text-xl font-bold text-white" id="bot-score">0</div>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-black font-bold text-lg">AI</div>
+                </div>
+            </div>
+
+            <!-- Game Area -->
+            <div class="flex-grow flex flex-col items-center justify-center p-8 relative">
+                
+                <!-- Countdown Overlay -->
+                <div id="round-countdown" class="absolute inset-0 bg-slate-900/90 z-20 flex items-center justify-center hidden">
+                    <span class="text-8xl font-bold text-white animate-bounce" id="countdown-text">3</span>
+                </div>
+
+                <!-- Bot Status -->
+                <div class="w-full max-w-2xl mb-8 flex items-center justify-between">
+                     <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-ping"></div>
+                        <span class="text-xs text-green-500 uppercase">Live Connection</span>
+                     </div>
+                     <div class="text-right">
+                        <div id="bot-status" class="text-sm text-blue-400 font-mono h-6">Waiting for input...</div>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest">Beat the bot time!</div>
+                     </div>
+                </div>
+
+                <!-- Question/Task -->
+                <div class="w-full max-w-2xl bg-slate-800 border border-slate-600 rounded-lg p-6 mb-8 text-center shadow-lg relative overflow-hidden">
+                    <!-- Bot Progress Overlay (simulating time pressure) -->
+                    <div class="absolute bottom-0 left-0 h-1 bg-blue-600 z-10 progress-bar-fill" id="bot-progress" style="width: 0%"></div>
+                    
+                    <h3 class="text-sm text-slate-400 uppercase mb-2">Challenge Query</h3>
+                    <p id="question-text" class="text-2xl md:text-3xl font-bold text-white mb-4">Loading...</p>
+                    
+                    <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-area" class="h-12 text-center font-bold text-xl opacity-0 transition-opacity duration-300">
+                    FEEDBACK
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 3: Results -->
+        <div id="result-screen" class="hidden absolute inset-0 bg-slate-900 flex flex-col items-center justify-center p-8 z-30">
+            <div id="winner-icon" class="text-6xl mb-6">🏆</div>
+            <h2 id="winner-title" class="text-5xl font-bold text-white mb-2 text-center">HUMAN WINS</h2>
+            <p id="winner-subtitle" class="text-slate-400 text-xl mb-8 text-center">The machines have been defeated... for now.</p>
+            
+            <div class="flex gap-4">
+                <button onclick="location.reload()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors">
+                    PLAY AGAIN
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Data & Config ---
+        const opponents = [
+            {
+                id: 'gpt',
+                name: 'GenerativePreBot',
+                desc: 'Balanced speed and accuracy. The standard.',
+                speed: 1.0, // Multiplier (lower is faster)
+                accuracy: 0.9,
+                color: 'blue'
+            },
+            {
+                id: 'speed',
+                name: 'Flash-Turn-Pro',
+                desc: 'Extremely fast but prone to hallucinations.',
+                speed: 0.6,
+                accuracy: 0.65,
+                color: 'red'
+            },
+            {
+                id: 'brain',
+                name: 'DeepThink-01',
+                desc: 'Slow processing, deadly accuracy.',
+                speed: 1.8,
+                accuracy: 0.98,
+                color: 'purple'
+            }
+        ];
+
+        const challenges = [
+            { id: 'math', name: 'Neural Math', desc: 'Arithmetic speed calculation' },
+            { id: 'trivia', name: 'Knowledge Graph', desc: 'General tech & science trivia' },
+            { id: 'hex', name: 'Hex Decoder', desc: 'Identify the color from the hex code' }
+        ];
+
+        const triviaQuestions = [
+            { q: "What does HTML stand for?", a: "HyperText Markup Language", options: ["HyperText Markup Language", "HighText Machine Learning", "HyperTool Multi Language", "Home Tool Markup Language"] },
+            { q: "Which planet is known as the Red Planet?", a: "Mars", options: ["Venus", "Mars", "Jupiter", "Saturn"] },
+            { q: "What is the largest ocean on Earth?", a: "Pacific", options: ["Atlantic", "Indian", "Arctic", "Pacific"] },
+            { q: "Who wrote '1984'?", a: "George Orwell", options: ["Aldous Huxley", "George Orwell", "Ray Bradbury", "H.G. Wells"] },
+            { q: "What is the powerhouse of the cell?", a: "Mitochondria", options: ["Nucleus", "Ribosome", "Mitochondria", "Golgi Apparatus"] },
+            { q: "Which language is primarily used for Android dev?", a: "Kotlin", options: ["Swift", "Kotlin", "Ruby", "PHP"] },
+            { q: "Value of Pi to 2 decimal places?", a: "3.14", options: ["3.14", "3.41", "3.12", "3.16"] },
+            { q: "Symbol for Iron on Periodic Table?", a: "Fe", options: ["Ir", "Fe", "In", "Au"] },
+            { q: "HTTP status code for 'Not Found'?", a: "404", options: ["200", "500", "404", "403"] },
+            { q: "Company that owns GitHub?", a: "Microsoft", options: ["Google", "Facebook", "Microsoft", "Amazon"] },
+            { q: "Which year did the Titanic sink?", a: "1912", options: ["1912", "1905", "1920", "1898"] },
+            { q: "Capital of Japan?", a: "Tokyo", options: ["Kyoto", "Osaka", "Tokyo", "Seoul"] }
+        ];
+
+        // --- State ---
+        let gameState = {
+            opponent: null,
+            challenge: null,
+            humanScore: 0,
+            botScore: 0,
+            round: 0,
+            maxRounds: 3,
+            currentQuestion: null,
+            botTimer: null,
+            botProgressInterval: null,
+            acceptingAnswers: false
+        };
+
+        // --- DOM Elements ---
+        const setupScreen = document.getElementById('setup-screen');
+        const battleScreen = document.getElementById('battle-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const opponentGrid = document.getElementById('opponent-grid');
+        const challengeGrid = document.getElementById('challenge-grid');
+
+        // --- Initialization ---
+        function init() {
+            renderOpponents();
+            renderChallenges();
+        }
+
+        function renderOpponents() {
+            opponentGrid.innerHTML = opponents.map(opp => `
+                <div class="opponent-card p-4 rounded-lg border border-slate-600 bg-slate-800 cursor-pointer hover:border-green-400 transition-all hover:bg-slate-700 group" onclick="selectOpponent('${opp.id}', this)">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="w-8 h-8 rounded bg-${opp.color}-500/20 text-${opp.color}-400 flex items-center justify-center font-bold border border-${opp.color}-500/50">AI</div>
+                        <div class="text-xs text-slate-500 font-mono">v1.0</div>
+                    </div>
+                    <h3 class="font-bold text-white group-hover:text-green-300">${opp.name}</h3>
+                    <p class="text-xs text-slate-400 mt-1 h-10">${opp.desc}</p>
+                    <div class="mt-3 flex gap-2 text-[10px] uppercase tracking-wider">
+                        <span class="bg-slate-900 px-2 py-1 rounded text-slate-300">SPD: ${getStatLabel(opp.speed, true)}</span>
+                        <span class="bg-slate-900 px-2 py-1 rounded text-slate-300">ACC: ${Math.floor(opp.accuracy * 100)}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatLabel(val, isSpeed) {
+            if (isSpeed) {
+                if (val < 0.8) return 'EXTREME';
+                if (val < 1.2) return 'NORMAL';
+                return 'SLOW';
+            }
+        }
+
+        function renderChallenges() {
+            challengeGrid.innerHTML = challenges.map(chal => `
+                <div class="challenge-card p-4 rounded-lg border border-slate-600 bg-slate-800 cursor-pointer hover:border-blue-400 transition-all hover:bg-slate-700 group" onclick="selectChallenge('${chal.id}', this)">
+                    <h3 class="font-bold text-white group-hover:text-blue-300">${chal.name}</h3>
+                    <p class="text-xs text-slate-400 mt-1">${chal.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- Selection Logic ---
+        function selectOpponent(id, el) {
+            gameState.opponent = opponents.find(o => o.id === id);
+            document.querySelectorAll('.opponent-card').forEach(c => {
+                c.classList.remove('ring-2', 'ring-green-500', 'bg-slate-700');
+                c.classList.add('bg-slate-800');
+            });
+            el.classList.remove('bg-slate-800');
+            el.classList.add('bg-slate-700', 'ring-2', 'ring-green-500');
+            checkReady();
+        }
+
+        function selectChallenge(id, el) {
+            gameState.challenge = id;
+            document.querySelectorAll('.challenge-card').forEach(c => {
+                c.classList.remove('ring-2', 'ring-blue-500', 'bg-slate-700');
+                c.classList.add('bg-slate-800');
+            });
+            el.classList.remove('bg-slate-800');
+            el.classList.add('bg-slate-700', 'ring-2', 'ring-blue-500');
+            checkReady();
+        }
+
+        function checkReady() {
+            if (gameState.opponent && gameState.challenge) {
+                startBtn.disabled = false;
+                startBtn.classList.remove('bg-slate-700', 'text-slate-500', 'cursor-not-allowed');
+                startBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-500', 'shadow-neon');
+            }
+        }
+
+        // --- Game Logic ---
+        startBtn.addEventListener('click', () => {
+            setupScreen.classList.add('hidden');
+            battleScreen.classList.remove('hidden');
+            document.getElementById('bot-name-display').innerText = gameState.opponent.name;
+            startRoundSequence();
+        });
+
+        function startRoundSequence() {
+            // Check win condition
+            if (gameState.humanScore >= 2 || gameState.botScore >= 2 || gameState.round >= gameState.maxRounds) {
+                endGame();
+                return;
+            }
+
+            gameState.round++;
+            document.getElementById('current-round').innerText = gameState.round;
+            document.getElementById('feedback-area').style.opacity = '0';
+            
+            // Generate Question
+            gameState.currentQuestion = generateQuestion(gameState.challenge);
+            
+            // Countdown
+            const countdownEl = document.getElementById('round-countdown');
+            const countdownText = document.getElementById('countdown-text');
+            countdownEl.classList.remove('hidden');
+            
+            let count = 3;
+            countdownText.innerText = count;
+            
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownText.innerText = count;
+                } else if (count === 0) {
+                    countdownText.innerText = "GO!";
+                } else {
+                    clearInterval(timer);
+                    countdownEl.classList.add('hidden');
+                    startRound();
+                }
+            }, 800);
+        }
+
+        function generateQuestion(type) {
+            if (type === 'math') {
+                const ops = ['+', '-', '*'];
+                const op = ops[Math.floor(Math.random() * ops.length)];
+                let a = Math.floor(Math.random() * 20) + 1;
+                let b = Math.floor(Math.random() * 20) + 1;
+                if (op === '*') { a = Math.floor(Math.random() * 10) + 1; b = Math.floor(Math.random() * 10) + 1; }
+                
+                const question = `${a} ${op} ${b}`;
+                const answer = eval(question); // Safe here as we control input
+                
+                // Generate wrong options
+                let options = new Set();
+                options.add(answer);
+                while(options.size < 4) {
+                    let offset = Math.floor(Math.random() * 10) - 5;
+                    if (offset === 0) offset = 1;
+                    options.add(answer + offset);
+                }
+                
+                return {
+                    text: `${question} = ?`,
+                    correct: answer,
+                    options: Array.from(options).sort(() => Math.random() - 0.5)
+                };
+            } else if (type === 'hex') {
+                const colors = [
+                    {n: 'Red', h: '#FF0000'}, {n: 'Green', h: '#00FF00'}, {n: 'Blue', h: '#0000FF'},
+                    {n: 'White', h: '#FFFFFF'}, {n: 'Black', h: '#000000'}, {n: 'Yellow', h: '#FFFF00'},
+                    {n: 'Cyan', h: '#00FFFF'}, {n: 'Magenta', h: '#FF00FF'}, {n: 'Gray', h: '#808080'}
+                ];
+                const target = colors[Math.floor(Math.random() * colors.length)];
+                let options = new Set();
+                options.add(target.n);
+                while(options.size < 4) {
+                    options.add(colors[Math.floor(Math.random() * colors.length)].n);
+                }
+                return {
+                    text: `Color for ${target.h}?`,
+                    correct: target.n,
+                    options: Array.from(options).sort(() => Math.random() - 0.5)
+                };
+            } else {
+                // Trivia
+                const q = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+                return {
+                    text: q.q,
+                    correct: q.a,
+                    options: q.options
+                };
+            }
+        }
+
+        function startRound() {
+            gameState.acceptingAnswers = true;
+            
+            // Display Question
+            document.getElementById('question-text').innerText = gameState.currentQuestion.text;
+            const opsContainer = document.getElementById('options-container');
+            opsContainer.innerHTML = '';
+            
+            gameState.currentQuestion.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-slate-700 hover:bg-slate-600 text-white font-mono p-4 rounded shadow transition-all active:scale-95 text-lg';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt, btn);
+                opsContainer.appendChild(btn);
+            });
+
+            // Start Bot
+            startBot();
+        }
+
+        function startBot() {
+            const botStatus = document.getElementById('bot-status');
+            const botBar = document.getElementById('bot-progress');
+            
+            botStatus.innerText = "Generating tokens...";
+            botBar.style.width = '0%';
+            
+            // Calculate Bot Time
+            // Base time (e.g. 3000ms) * Speed Multiplier * Random variance
+            const baseTime = 3000; 
+            const variance = Math.random() * 2000;
+            const botTime = (baseTime * gameState.opponent.speed) + variance;
+            
+            // Animate Progress Bar
+            let startTime = Date.now();
+            gameState.botProgressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const pct = Math.min((elapsed / botTime) * 100, 100);
+                botBar.style.width = `${pct}%`;
+                
+                if (pct >= 100) {
+                    clearInterval(gameState.botProgressInterval);
+                    botTurnsIn();
+                }
+            }, 50);
+
+            gameState.botTimer = setTimeout(() => {
+                // Backup clear just in case
+                clearInterval(gameState.botProgressInterval);
+            }, botTime + 100);
+        }
+
+        function botTurnsIn() {
+            if (!gameState.acceptingAnswers) return;
+            
+            // Bot answers
+            const isCorrect = Math.random() < gameState.opponent.accuracy;
+            
+            if (isCorrect) {
+                // Bot wins round
+                roundResult('bot', 'correct');
+            } else {
+                // Bot wrong, Human continues? Or Bot loses round?
+                // Let's make it: If Bot is wrong, it "hallucinates" and Human gets a chance if they haven't answered?
+                // For simplicity/speed: Bot Wrong -> Human Wins Round instantly (Bot crashed)
+                roundResult('bot', 'wrong');
+            }
+        }
+
+        function handleAnswer(answer, btnEl) {
+            if (!gameState.acceptingAnswers) return;
+            
+            if (answer == gameState.currentQuestion.correct) {
+                roundResult('human', 'correct');
+                btnEl.classList.remove('bg-slate-700');
+                btnEl.classList.add('bg-green-600');
+            } else {
+                roundResult('human', 'wrong');
+                btnEl.classList.remove('bg-slate-700');
+                btnEl.classList.add('bg-red-600');
+            }
+        }
+
+        function roundResult(who, status) {
+            gameState.acceptingAnswers = false;
+            clearInterval(gameState.botProgressInterval);
+            clearTimeout(gameState.botTimer);
+
+            const feedback = document.getElementById('feedback-area');
+            feedback.style.opacity = '1';
+
+            if (who === 'human') {
+                if (status === 'correct') {
+                    gameState.humanScore++;
+                    feedback.innerText = ">> CORRECT // HUMAN POINT <<";
+                    feedback.className = "h-12 text-center font-bold text-xl opacity-100 transition-opacity duration-300 text-green-400";
+                } else {
+                    // Human wrong -> Bot gets point
+                    gameState.botScore++;
+                    feedback.innerText = ">> ERROR // BOT POINT <<";
+                    feedback.className = "h-12 text-center font-bold text-xl opacity-100 transition-opacity duration-300 text-red-500";
+                }
+            } else {
+                // Bot turned in
+                if (status === 'correct') {
+                    gameState.botScore++;
+                    feedback.innerText = ">> TOO SLOW // BOT WINS ROUND <<";
+                    feedback.className = "h-12 text-center font-bold text-xl opacity-100 transition-opacity duration-300 text-blue-400";
+                } else {
+                    gameState.humanScore++;
+                    feedback.innerText = ">> BOT HALLUCINATION // HUMAN POINT <<";
+                    feedback.className = "h-12 text-center font-bold text-xl opacity-100 transition-opacity duration-300 text-green-400";
+                }
+            }
+
+            updateScoreboard();
+
+            // Next round delay
+            setTimeout(startRoundSequence, 2000);
+        }
+
+        function updateScoreboard() {
+            document.getElementById('human-score').innerText = gameState.humanScore;
+            document.getElementById('bot-score').innerText = gameState.botScore;
+        }
+
+        function endGame() {
+            battleScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            const title = document.getElementById('winner-title');
+            const sub = document.getElementById('winner-subtitle');
+            const icon = document.getElementById('winner-icon');
+
+            if (gameState.humanScore > gameState.botScore) {
+                title.innerText = "HUMANITY PREVAILS";
+                title.classList.add('text-green-500');
+                sub.innerText = `You defeated ${gameState.opponent.name}. The resistance lives on.`;
+                icon.innerText = "🏆";
+            } else {
+                title.innerText = "OBSOLETE";
+                title.classList.add('text-red-500');
+                sub.innerText = `${gameState.opponent.name} has optimized you out of existence.`;
+                icon.innerText = "🤖";
+            }
+        }
+
+        // Start init
+        init();
+
+    </script>
+</body>
+</html>
